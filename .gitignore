@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+checkpoints/
+logs/
+data/
+*.keras
+*.h5
+.idea/
+.vscode/
+/.venv-wsl/bin
+/.venv-wsl

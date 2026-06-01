@@ -1,0 +1,6 @@
+tensorflow>=2.15.0
+numpy>=1.26.0
+pandas>=2.2.0
+matplotlib>=3.8.0
+tensorboard>=2.16.0
+pygame>=2.5.0
