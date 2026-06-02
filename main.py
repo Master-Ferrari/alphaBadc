@@ -77,6 +77,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_train.add_argument("--checkpoint-dir", type=str, default="checkpoints")
     p_train.add_argument("--log-dir", type=str, default="logs")
     p_train.add_argument("--resume-from", type=str, default=None)
+    p_train.add_argument("--resume-partial", action="store_true",
+                         help="частичная загрузка весов при смене числа входных каналов "
+                              "(переносит stem-conv по старым каналам, новые — заново)")
     p_train.add_argument("--anchor-checkpoint", type=str, default=None,
                          help="замороженный чекпоинт для метрики winrate_vs_anchor")
     p_train.add_argument("--workers", type=int, default=0,
@@ -122,6 +125,7 @@ def main() -> None:
             checkpoint_dir=args.checkpoint_dir,
             log_dir=args.log_dir,
             resume_from=args.resume_from,
+            resume_partial=args.resume_partial,
             anchor_checkpoint=args.anchor_checkpoint,
             num_workers=args.workers,
             seed=args.seed,

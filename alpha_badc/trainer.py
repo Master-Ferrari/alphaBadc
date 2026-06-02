@@ -45,6 +45,7 @@ class TrainConfig:
     log_dir: str = "logs"
     run_name: str = "az_badc"
     resume_from: Optional[str] = None
+    resume_partial: bool = False  # частичная загрузка при смене числа входных каналов (stem-conv)
     anchor_checkpoint: Optional[str] = None  # замороженный чекпоинт-якорь для winrate_vs_anchor
     num_workers: int = 0  # параллельный self-play: 0 = авто (2/3 ядер), 1 = последовательно
 
@@ -117,7 +118,10 @@ def train(train_cfg: TrainConfig, game_cfg: GameConfig, az_cfg: AZConfig) -> Non
                 f"--resume-from указывает на несуществующий файл: {train_cfg.resume_from}. "
                 "Проверь путь (напр. *_latest сохраняется только ПОСЛЕ завершения прогона)."
             )
-        net.load(train_cfg.resume_from)
+        if train_cfg.resume_partial:
+            net.load_partial(train_cfg.resume_from)
+        else:
+            net.load(train_cfg.resume_from)
         meta_path = train_cfg.resume_from + ".meta.json"
         if os.path.exists(meta_path):
             with open(meta_path, encoding="utf-8") as f:
@@ -141,7 +145,10 @@ def train(train_cfg: TrainConfig, game_cfg: GameConfig, az_cfg: AZConfig) -> Non
                   "winrate_vs_anchor останется пустым")
         else:
             anchor_net = AZNetwork(_input_shape(game_cfg), action_size(game_cfg), az_cfg)
-            anchor_net.load(train_cfg.anchor_checkpoint)
+            if train_cfg.resume_partial:
+                anchor_net.load_partial(train_cfg.anchor_checkpoint)
+            else:
+                anchor_net.load(train_cfg.anchor_checkpoint)
             anchor_agent = NetAgent(anchor_net, az_cfg, simulations=train_cfg.eval_sims)
             print(f"[anchor] winrate_vs_anchor против замороженного {train_cfg.anchor_checkpoint}")
     start_time = time.time()

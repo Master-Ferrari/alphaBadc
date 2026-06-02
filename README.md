@@ -64,8 +64,21 @@ python main.py train --own-word explode --opp-word on --score-limit 4 --players 
 ### 2) Графики
 
 ```bash
-python scripts/plot_train_metrics.py --csv logs/az_badc/train_metrics.csv --out-dir logs/az_badc/plots
+MPLBACKEND=Agg python scripts/plot_train_metrics.py \
+  --csv logs/az_badc_v3/train_metrics.csv --out-dir logs/plots_v3
 ```
+
+`MPLBACKEND=Agg` — headless-бэкенд: обязателен под WSL/сервером без дисплея
+(иначе matplotlib пытается открыть GUI-окно). На десктопе с экраном можно опустить.
+
+Зависимости (`matplotlib`, `pandas`) ставятся из `requirements.txt`. Если видишь
+`ModuleNotFoundError: No module named 'matplotlib'` — окружение собрано не полностью,
+доустанови: `pip install -r requirements.txt`.
+
+> ⚠️ Окружения `.venv` / `.venv-wsl` в этом проекте — **WSL/Linux** (см. `pyvenv.cfg`:
+> `home = /usr/bin`). Из Windows PowerShell их нельзя активировать через
+> `.venv\Scripts\activate` — запускай через WSL:
+> `wsl -e bash -lc "cd <проект> && source .venv-wsl/bin/activate && MPLBACKEND=Agg python scripts/plot_train_metrics.py --csv ... --out-dir ..."`
 
 Скрипт идентичен тетрисному: строит каждую метрику + `overview.png` +
 `metric_explanations.md`. Чтобы сравнить с тетрисом — постройте оба CSV одним и
