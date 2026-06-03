@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AlphaBADC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=PT+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000;
+    --fill:#1c1c22;        /* обычная поверхность */
+    --active:#34343f;      /* активное: hover, ход стороны, основная кнопка */
+    --press:#4c4c59;       /* нажато: выбранная клетка, button:active */
+    --off:#121216;         /* неактивное: выключенные кнопки и инфо */
+    --fg:#f0f0f5;
+    --muted:#9a9aa8;
+    --r:4px;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'PT Mono',ui-monospace,monospace;background:var(--bg);color:var(--fg);
+       margin:0;padding:24px 16px 40px;display:flex;flex-direction:column;align-items:center;
+       text-transform:lowercase}
+  h1{font-size:22px;font-weight:700;letter-spacing:.04em;margin:0 0 18px;text-transform:none}
+  .row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+  [hidden]{display:none !important}
+
+  input[type=radio]{accent-color:var(--fg);transform:scale(1.15)}
+  label{cursor:pointer;color:var(--fg)}
+  select{background:var(--fill);color:var(--fg);border:0;border-radius:var(--r);padding:4px 8px;font-size:13px}
+  button{font-family:inherit}
+
+  button.act{background:var(--active);color:var(--fg);border:0;border-radius:var(--r);
+             padding:9px 20px;cursor:pointer;font-size:14px;font-weight:600}
+  button.act:active{background:var(--press)}
+  button.act:disabled{background:var(--off);color:var(--muted);cursor:default}
+  button.act.ghost{background:var(--fill)}
+
+  /* ---------- экран настроек ---------- */
+  #setup{display:flex;flex-direction:column;align-items:center;gap:16px;padding:14px 0}
+  #boot{color:var(--muted);font-size:12px;min-height:14px}
+  #setup .field{text-align:center;font-size:13px}
+  #setup .flabel{display:block;font-size:11px;letter-spacing:.04em;
+                 color:var(--muted);margin-bottom:7px}
+  #setup .field label{margin:0 8px}
+
+  /* ---------- экран игры ---------- */
+  /* #arena получает фиксированную ширину поля из JS; все ряды её заполняют */
+  #arena{display:flex;flex-direction:column}
+
+  /* верхний ряд: 3 равных элемента — ты, соперник, новая игра */
+  .players{display:flex;gap:4px;align-items:stretch}
+  .pcard{flex:1;background:var(--fill);border-radius:var(--r);padding:8px 12px;
+         display:flex;flex-direction:column;justify-content:center;gap:7px}
+  .pcard.on{background:var(--active)}
+  .pcard .top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .pcard .who{font-size:12px;letter-spacing:.02em;color:var(--muted);white-space:nowrap}
+  .pcard.on .who{color:var(--fg)}
+  .pcard .who .sz{margin-left:3px;opacity:.65;font-weight:400}
+  .pcard .pts{font-size:18px;font-weight:700;line-height:1}
+  .word{display:flex;gap:3px;justify-content:center}
+  .tile{flex:1;max-width:30px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+        background:var(--bg);border-radius:var(--r);font-size:15px;font-weight:700}
+  .newbtn{flex:1;align-self:stretch}
+
+  .meta{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+
+  #grid{display:grid;gap:4px;margin-top:10px}
+  .cell{aspect-ratio:1;background:var(--fill);border:0;border-radius:var(--r);
+        font-size:25px;font-weight:700;cursor:pointer;color:var(--fg);transition:background .1s}
+  .cell:hover:enabled{background:var(--active)}
+  .cell:disabled{cursor:default}
+  .cell.sel{background:var(--press)}
+  .cell.win{background:var(--active)}
+
+  /* нижний ряд: 4 равных элемента — буквы */
+  .picker{display:flex;gap:4px;margin-top:10px}
+  .pick{flex:1;height:54px;background:var(--fill);border:0;border-radius:var(--r);
+        font-size:25px;font-weight:700;cursor:pointer;transition:background .1s}
+  .pick:hover:enabled{background:var(--active)}
+  .pick:active:enabled{background:var(--press)}
+  .pick:disabled{background:var(--off);cursor:default}
+
+  #status{font-weight:600;margin-top:14px;min-height:20px;text-align:center}
+
+  /* буквы — единственный цвет; объявлены ПОСЛЕ поверхностей, поэтому перекрывают fg */
+  .a{color:#3fb6ff}.b{color:#ffd23f}.c{color:#7d8cff}.d{color:#ff9b3f}.e{color:#777}
+  .pick:disabled.a,.pick:disabled.b,.pick:disabled.c,.pick:disabled.d{opacity:.4}
+
+  details.help{max-width:560px;width:100%;margin-top:26px;text-align:left;
+               background:var(--fill);border-radius:var(--r)}
+  details.help summary{cursor:pointer;padding:11px 16px;font-weight:600;list-style:none}
+  details.help summary::-webkit-details-marker{display:none}
+  details.help summary::before{content:"▸ ";color:var(--muted)}
+  details.help[open] summary::before{content:"▾ "}
+  .help .body{padding:0 18px 16px;font-size:13px;line-height:1.55;color:#cdcdd6}
+  .help .body h4{margin:13px 0 4px;font-size:13px;color:var(--fg)}
+  .help .body code{background:var(--active);border-radius:var(--r);padding:1px 5px}
+  .help table{border-collapse:collapse;margin:6px 0}
+  .help td{background:var(--off);border-radius:var(--r);padding:3px 8px}
+</style></head>
+<body>
+<h1>AlphaBADC</h1>
+
+<!-- ЭКРАН НАСТРОЕК -->
+<section id="setup">
+  <div id="boot">Загрузка модели…</div>
+  <div class="field">
+    <span class="flabel">Ты ходишь</span>
+    <label><input type="radio" name="seat" value="0" checked> первым</label>
+    <label><input type="radio" name="seat" value="1"> вторым</label>
+  </div>
+  <div class="field">
+    <span class="flabel">Симуляций на ход</span>
+    <select id="sims"><option>20</option><option selected>80</option><option>160</option><option>320</option></select>
+  </div>
+  <button class="act" id="playbtn" onclick="startGame()" disabled>Играть</button>
+</section>
+
+<!-- ЭКРАН ИГРЫ -->
+<section id="game" hidden>
+  <div id="arena">
+    <div class="players">
+      <div class="pcard" id="pcard-me">
+        <div class="top"><span class="who">Ты</span><span class="pts" id="mypts"></span></div>
+        <span id="myword" class="word"></span>
+      </div>
+      <div class="pcard" id="pcard-opp">
+        <div class="top"><span class="who">Alpha Zero <span class="sz">3,5mb</span></span><span class="pts" id="opppts"></span></div>
+        <span id="oppword" class="word"></span>
+      </div>
+      <button class="act ghost newbtn" onclick="showSetup()">Новая<br>игра</button>
+    </div>
+    <div id="grid"></div>
+    <div class="picker" id="picker"></div>
+    <div id="status"></div>
+  </div>
+
+  <details class="help">
+    <summary>Правила</summary>
+    <div class="body">
+
+      Цель — выложить своё слово в ряд.
+
+      Буквы общие. + 1 очко тому кто выложил своё слово. + 0 очков тому кто выложил чужое. Игра до четырёх. 
+
+      После сбора своего слова оно стирается и стирает немного вокруг, а после чужого — стирается. Заверающая буквы не стирается.
+
+      <p>Поле <b>9×5</b>, буквы общие — <code class="a">a</code> <code class="b">b</code>
+      <code class="c">c</code> <code class="d">d</code>. За ход ставишь одну букву в пустую
+      клетку. У каждого своё <b>слово из 4 букв</b>; </p>
+      <h4>Направления линии</h4>
+      <p>Только левая половина «розы»: → вправо, ↓ вниз, ↘ и ↗ по диагоналям.</p>
+      <h4>Слова игроков</h4>
+      <table><tr><td>1-й</td><td><code>a b c d</code></td><td>2-й</td><td><code>b a d c</code></td></tr></table>
+      <h4>Очки и стирание (текущий режим)</h4>
+      <p>Слово не заканчивает партию сразу, а даёт очки тому, <b>кто сделал ход</b>:
+      <b>+1</b> за своё слово. Затем клетки стираются (поставленная буква остаётся):</p>
+      <ul style="margin:4px 0 0;padding-left:18px">
+        <li><b>Своё слово → взрыв:</b> очищается слово и все соседние клетки.</li>
+        <li><b>Чужое слово → вкл:</b> очищаются 3 из 4 клеток слова.</li>
+      </ul>
+      <h4>Конец партии</h4>
+      <p>Побеждает первый, набравший <b>4 очка</b>. Если поле/ходы закончились раньше —
+      выигрывает лидер по очкам (равенство — ничья).</p>
+    </div>
+  </details>
+</section>
+
+<script src="net.js"></script>
+<script src="game.js"></script>
+<script src="encoding.js"></script>
+<script src="mcts.js"></script>
+<script src="app.js"></script>
+</body></html>

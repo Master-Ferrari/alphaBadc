@@ -1,0 +1,280 @@
+{
+  "input_shape": [
+    5,
+    9,
+    43
+  ],
+  "channels": 64,
+  "blocks": 5,
+  "kernel": 3,
+  "head_kernel": 4,
+  "action_size": 180,
+  "weights": {
+    "stem.w": {
+      "shape": [
+        3,
+        3,
+        43,
+        64
+      ],
+      "offset": 0,
+      "size": 24768
+    },
+    "stem.b": {
+      "shape": [
+        64
+      ],
+      "offset": 24768,
+      "size": 64
+    },
+    "res0.a.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 24832,
+      "size": 36864
+    },
+    "res0.a.b": {
+      "shape": [
+        64
+      ],
+      "offset": 61696,
+      "size": 64
+    },
+    "res0.b.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 61760,
+      "size": 36864
+    },
+    "res0.b.b": {
+      "shape": [
+        64
+      ],
+      "offset": 98624,
+      "size": 64
+    },
+    "res1.a.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 98688,
+      "size": 36864
+    },
+    "res1.a.b": {
+      "shape": [
+        64
+      ],
+      "offset": 135552,
+      "size": 64
+    },
+    "res1.b.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 135616,
+      "size": 36864
+    },
+    "res1.b.b": {
+      "shape": [
+        64
+      ],
+      "offset": 172480,
+      "size": 64
+    },
+    "res2.a.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 172544,
+      "size": 36864
+    },
+    "res2.a.b": {
+      "shape": [
+        64
+      ],
+      "offset": 209408,
+      "size": 64
+    },
+    "res2.b.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 209472,
+      "size": 36864
+    },
+    "res2.b.b": {
+      "shape": [
+        64
+      ],
+      "offset": 246336,
+      "size": 64
+    },
+    "res3.a.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 246400,
+      "size": 36864
+    },
+    "res3.a.b": {
+      "shape": [
+        64
+      ],
+      "offset": 283264,
+      "size": 64
+    },
+    "res3.b.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 283328,
+      "size": 36864
+    },
+    "res3.b.b": {
+      "shape": [
+        64
+      ],
+      "offset": 320192,
+      "size": 64
+    },
+    "res4.a.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 320256,
+      "size": 36864
+    },
+    "res4.a.b": {
+      "shape": [
+        64
+      ],
+      "offset": 357120,
+      "size": 64
+    },
+    "res4.b.w": {
+      "shape": [
+        3,
+        3,
+        64,
+        64
+      ],
+      "offset": 357184,
+      "size": 36864
+    },
+    "res4.b.b": {
+      "shape": [
+        64
+      ],
+      "offset": 394048,
+      "size": 64
+    },
+    "policy.conv.w": {
+      "shape": [
+        4,
+        4,
+        64,
+        32
+      ],
+      "offset": 394112,
+      "size": 32768
+    },
+    "policy.conv.b": {
+      "shape": [
+        32
+      ],
+      "offset": 426880,
+      "size": 32
+    },
+    "policy.fc.w": {
+      "shape": [
+        1440,
+        180
+      ],
+      "offset": 426912,
+      "size": 259200
+    },
+    "policy.fc.b": {
+      "shape": [
+        180
+      ],
+      "offset": 686112,
+      "size": 180
+    },
+    "value.conv.w": {
+      "shape": [
+        4,
+        4,
+        64,
+        32
+      ],
+      "offset": 686292,
+      "size": 32768
+    },
+    "value.conv.b": {
+      "shape": [
+        32
+      ],
+      "offset": 719060,
+      "size": 32
+    },
+    "value.fc1.w": {
+      "shape": [
+        1440,
+        128
+      ],
+      "offset": 719092,
+      "size": 184320
+    },
+    "value.fc1.b": {
+      "shape": [
+        128
+      ],
+      "offset": 903412,
+      "size": 128
+    },
+    "value.fc2.w": {
+      "shape": [
+        128,
+        1
+      ],
+      "offset": 903540,
+      "size": 128
+    },
+    "value.fc2.b": {
+      "shape": [
+        1
+      ],
+      "offset": 903668,
+      "size": 1
+    }
+  }
+}
