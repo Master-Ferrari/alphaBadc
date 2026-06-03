@@ -19,20 +19,20 @@ from tensorflow.keras import layers
 from .config import AZConfig
 
 
-def _conv_block(x, channels: int, l2: float, name: str):
+def _conv_block(x, channels: int, l2: float, name: str, kernel: int = 3):
     x = layers.Conv2D(
-        channels, 3, padding="same", use_bias=False,
+        channels, kernel, padding="same", use_bias=False,
         kernel_regularizer=keras.regularizers.l2(l2), name=f"{name}_conv",
     )(x)
     x = layers.BatchNormalization(name=f"{name}_bn")(x)
     return layers.ReLU(name=f"{name}_relu")(x)
 
 
-def _residual_block(x, channels: int, l2: float, name: str):
+def _residual_block(x, channels: int, l2: float, name: str, kernel: int = 3):
     shortcut = x
-    y = _conv_block(x, channels, l2, f"{name}_a")
+    y = _conv_block(x, channels, l2, f"{name}_a", kernel=kernel)
     y = layers.Conv2D(
-        channels, 3, padding="same", use_bias=False,
+        channels, kernel, padding="same", use_bias=False,
         kernel_regularizer=keras.regularizers.l2(l2), name=f"{name}_b_conv",
     )(y)
     y = layers.BatchNormalization(name=f"{name}_b_bn")(y)
@@ -42,20 +42,22 @@ def _residual_block(x, channels: int, l2: float, name: str):
 
 def build_model(input_shape: Tuple[int, int, int], action_size: int, cfg: AZConfig) -> keras.Model:
     l2 = cfg.weight_decay
+    k = getattr(cfg, "kernel", 3)            # ядро ствола
+    hk = getattr(cfg, "head_kernel", 3)      # ядро голов (4 ≈ длина слова BADC)
     inputs = keras.Input(shape=input_shape, name="state")
-    x = _conv_block(inputs, cfg.channels, l2, "stem")
+    x = _conv_block(inputs, cfg.channels, l2, "stem", kernel=k)
     for i in range(cfg.blocks):
-        x = _residual_block(x, cfg.channels, l2, f"res{i}")
+        x = _residual_block(x, cfg.channels, l2, f"res{i}", kernel=k)
 
     # policy head
-    p = _conv_block(x, 32, l2, "policy_head")
+    p = _conv_block(x, 32, l2, "policy_head", kernel=hk)
     p = layers.Flatten(name="policy_flatten")(p)
     policy = layers.Dense(
         action_size, kernel_regularizer=keras.regularizers.l2(l2), name="policy_logits"
     )(p)
 
     # value head
-    v = _conv_block(x, 32, l2, "value_head")
+    v = _conv_block(x, 32, l2, "value_head", kernel=hk)
     v = layers.Flatten(name="value_flatten")(v)
     v = layers.Dense(128, activation="relu", kernel_regularizer=keras.regularizers.l2(l2), name="value_dense")(v)
     value = layers.Dense(1, activation="tanh", name="value")(v)

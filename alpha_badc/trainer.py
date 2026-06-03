@@ -48,6 +48,8 @@ class TrainConfig:
     resume_partial: bool = False  # частичная загрузка при смене числа входных каналов (stem-conv)
     anchor_checkpoint: Optional[str] = None  # замороженный чекпоинт-якорь для winrate_vs_anchor
     num_workers: int = 0  # параллельный self-play: 0 = авто (2/3 ядер), 1 = последовательно
+    batched_selfplay: bool = False  # GPU-режим: партии «в ширину», листья — одним predict_batch
+    selfplay_gpu_mem_mb: int = 0  # лимит VRAM на воркера батч-self-play (0 = memory_growth)
 
 
 CSV_HEADER = [
@@ -86,6 +88,11 @@ def _input_shape(game_cfg: GameConfig):
 
 def train(train_cfg: TrainConfig, game_cfg: GameConfig, az_cfg: AZConfig) -> None:
     from tensorflow.summary import create_file_writer, scalar
+
+    if train_cfg.batched_selfplay:
+        # не дать главному процессу захватить всю VRAM — иначе GPU-воркеры не уместятся
+        from .batched_selfplay import enable_gpu_memory_growth
+        enable_gpu_memory_growth()
 
     set_seed(train_cfg.seed)
     game_cfg.validate()
@@ -171,17 +178,35 @@ def train(train_cfg: TrainConfig, game_cfg: GameConfig, az_cfg: AZConfig) -> Non
         "winrate_vs_anchor": float("nan"),
     }
 
-    # Параллельный self-play (опционально).
+    # Self-play: батч-по-партиям (GPU, опц. на N воркерах) ИЛИ пул CPU-воркеров ИЛИ последовательно.
     pool = None
-    workers = train_cfg.num_workers if train_cfg.num_workers else default_workers()
-    if workers > 1:
-        pool = ParallelSelfPlay(
-            _input_shape(game_cfg), action_size(game_cfg), az_cfg,
-            num_workers=workers, tmp_dir=train_cfg.checkpoint_dir,
-        )
-        print(f"[parallel] self-play на {workers} воркерах")
+    batched_pool = None
+    if train_cfg.batched_selfplay:
+        # в батч-режиме авто-дефолт воркеров скромный (GPU-память!), а не 2/3 ядер
+        bworkers = train_cfg.num_workers if train_cfg.num_workers else 4
+        if bworkers > 1:
+            from .batched_selfplay import ParallelBatchedSelfPlay
+            batched_pool = ParallelBatchedSelfPlay(
+                _input_shape(game_cfg), action_size(game_cfg), az_cfg,
+                num_workers=bworkers, tmp_dir=train_cfg.checkpoint_dir,
+                gpu_mem_mb=train_cfg.selfplay_gpu_mem_mb,
+            )
+            print(f"[parallel] батч-self-play на {bworkers} GPU-воркерах "
+                  f"(лимит VRAM/воркер: {train_cfg.selfplay_gpu_mem_mb or 'growth'})")
+        else:
+            print("[parallel] батч-self-play: один процесс, листья — одним predict_batch (GPU)")
+        workers = bworkers
     else:
-        print("[parallel] последовательный self-play (workers=1)")
+        workers = train_cfg.num_workers if train_cfg.num_workers else default_workers()
+    if not train_cfg.batched_selfplay:
+        if workers > 1:
+            pool = ParallelSelfPlay(
+                _input_shape(game_cfg), action_size(game_cfg), az_cfg,
+                num_workers=workers, tmp_dir=train_cfg.checkpoint_dir,
+            )
+            print(f"[parallel] self-play на {workers} воркерах")
+        else:
+            print("[parallel] последовательный self-play (workers=1)")
 
     try:
         while iteration < train_cfg.total_iters:
@@ -192,7 +217,12 @@ def train(train_cfg: TrainConfig, game_cfg: GameConfig, az_cfg: AZConfig) -> Non
             draws = 0
             first_wins = 0
             games = az_cfg.games_per_iter
-            if pool is not None:
+            if batched_pool is not None:
+                results = batched_pool.play(net, games, game_cfg, az_cfg, base_seed=global_step + iteration)
+            elif train_cfg.batched_selfplay:
+                from .batched_selfplay import batched_self_play
+                results = batched_self_play(net, game_cfg, az_cfg, games)
+            elif pool is not None:
                 results = pool.play(net, games, game_cfg, az_cfg, base_seed=global_step + iteration)
             else:
                 results = [play_game(net, game_cfg, az_cfg) for _ in range(games)]
@@ -312,6 +342,8 @@ def train(train_cfg: TrainConfig, game_cfg: GameConfig, az_cfg: AZConfig) -> Non
             print(f"[warn] не удалось сохранить буфер: {e}")
         if pool is not None:
             pool.close()
+        if batched_pool is not None:
+            batched_pool.close()
         writer.close()
         csv_file.close()
         print(f"[done] total time {time.time() - start_time:.1f}s")

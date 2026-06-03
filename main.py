@@ -27,6 +27,9 @@ def add_az_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--c-puct", type=float, default=a.c_puct)
     parser.add_argument("--channels", type=int, default=a.channels)
     parser.add_argument("--blocks", type=int, default=a.blocks)
+    parser.add_argument("--kernel-size", type=int, default=a.kernel, help="размер ядра свёрток ствола (обычно 3)")
+    parser.add_argument("--head-kernel", type=int, default=a.head_kernel,
+                        help="размер ядра в головах (4 ≈ длина слова BADC)")
     parser.add_argument("--learning-rate", type=float, default=a.learning_rate)
     parser.add_argument("--games-per-iter", type=int, default=a.games_per_iter)
     parser.add_argument("--epochs-per-iter", type=int, default=a.epochs_per_iter)
@@ -51,6 +54,8 @@ def build_az_cfg(args) -> AZConfig:
         c_puct=args.c_puct,
         channels=args.channels,
         blocks=args.blocks,
+        kernel=getattr(args, "kernel_size", 3),
+        head_kernel=getattr(args, "head_kernel", 3),
         learning_rate=args.learning_rate,
     )
     cfg.games_per_iter = getattr(args, "games_per_iter", cfg.games_per_iter)
@@ -84,6 +89,11 @@ def build_parser() -> argparse.ArgumentParser:
                          help="замороженный чекпоинт для метрики winrate_vs_anchor")
     p_train.add_argument("--workers", type=int, default=0,
                          help="параллельный self-play: 0 = авто (2/3 ядер), 1 = последовательно")
+    p_train.add_argument("--batched-selfplay", action="store_true",
+                         help="GPU-режим: партии «в ширину», листья всех партий — одним predict_batch "
+                              "(с --workers N шардит на N GPU-процессов; иначе 1 процесс)")
+    p_train.add_argument("--selfplay-gpu-mem-mb", type=int, default=0,
+                         help="лимит VRAM на GPU-воркера батч-self-play, МБ (0 = memory_growth)")
     p_train.add_argument("--seed", type=int, default=42)
 
     p_eval = sub.add_parser("eval", help="Оценить чекпоинт на арене.")
@@ -128,6 +138,8 @@ def main() -> None:
             resume_partial=args.resume_partial,
             anchor_checkpoint=args.anchor_checkpoint,
             num_workers=args.workers,
+            batched_selfplay=args.batched_selfplay,
+            selfplay_gpu_mem_mb=args.selfplay_gpu_mem_mb,
             seed=args.seed,
         )
         train(train_cfg, game_cfg, az_cfg)

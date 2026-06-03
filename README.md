@@ -1,3 +1,37 @@
+
+
+venv
+```
+wsl
+source .venv-wsl/bin/activate
+```
+
+претрейн
+```
+python scripts/pretrain_heuristic.py --games 5000 --workers 16 --epochs 4 \
+  --head-kernel 4 --channels 64 --blocks 5 \
+  --keep-shards \
+  --out checkpoints/az_badc_v3_pretrain.weights.h5
+```
+
+cpu на четверной голове
+```
+python main.py train --resume-from checkpoints/az_badc_v3_pretrain.weights.h5 \
+  --run-name az_badc_v3pre --workers 16 --head-kernel 4 --channels 64 --blocks 5 \
+  --total-iters 200
+```
+
+
+
+
+
+
+
+
+
+
+
+
 # AlphaBADC
 
 Состязательное обучение ИИ для настольной игры **BADC** методом **AlphaZero**

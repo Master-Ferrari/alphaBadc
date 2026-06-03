@@ -10,3 +10,5 @@ data/
 .vscode/
 /.venv-wsl/bin
 /.venv-wsl
+/.venv-win
+/.venvScriptsactivate

@@ -80,6 +80,8 @@ class AZConfig:
     # Сеть
     channels: int = 64
     blocks: int = 5
+    kernel: int = 3        # размер ядра свёрток ствола
+    head_kernel: int = 3   # размер ядра в головах (4 ≈ длина слова в BADC; чётное ядро паддится асимметрично)
     learning_rate: float = 1e-3
     weight_decay: float = 1e-4
     value_loss_coef: float = 1.0
