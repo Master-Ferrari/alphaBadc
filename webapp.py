@@ -239,12 +239,14 @@ def main() -> None:
     parser.add_argument("--sims", type=int, default=80, help="число симуляций MCTS на ход")
     parser.add_argument("--channels", type=int, default=64)
     parser.add_argument("--blocks", type=int, default=5)
+    parser.add_argument("--head-kernel", type=int, default=3,
+                        help="размер ядра в головах (должен совпадать с чекпоинтом; претрейн — 4)")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
 
     GAME_CFG = GameConfig()
-    az_cfg = AZConfig(channels=args.channels, blocks=args.blocks)
+    az_cfg = AZConfig(channels=args.channels, blocks=args.blocks, head_kernel=args.head_kernel)
     net = AZNetwork((GAME_CFG.rows, GAME_CFG.cols, num_channels()), action_size(GAME_CFG), az_cfg)
     # Чекпоинты обучены с меньшим числом входных каналов (без плоскостей
     # последнего хода) — переносим совпадающие, новые обнуляем.

@@ -199,7 +199,8 @@ class BADCGame:
                     instant_winner = player
                     instant_line = line
             else:
-                self.scores[mover] += 1.0 if player == mover else 0.5
+                if player == mover:  # очки только за СВОЁ слово; за чужое — 0
+                    self.scores[mover] += 1.0
                 if rule == "corrupt":
                     corrupt_set.update(line)
                 else:
