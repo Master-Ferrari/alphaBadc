@@ -94,7 +94,8 @@
   details.help[open] summary::before{content:"▾ "}
   .help .body{padding:0 18px 16px;font-size:13px;line-height:1.55;color:#cdcdd6}
   .help .body h4{margin:13px 0 4px;font-size:13px;color:var(--fg)}
-  .help .body code{background:var(--active);border-radius:var(--r);padding:1px 5px}
+  .help .body code{display:inline-block;background:var(--active);border-radius:var(--r);
+                   width:18px;text-align:center;padding:1px 0;margin:0 1px;font-weight:700}
   .help table{border-collapse:collapse;margin:6px 0}
   .help td{background:var(--off);border-radius:var(--r);padding:3px 8px}
 </style></head>
@@ -138,16 +139,20 @@
   <details class="help">
     <summary>Правила</summary>
     <div class="body">
+      <p>Цель — выложить своё слово в ряд.</p>
+      <p>Буквы общие. <b>+1</b> очко тому, кто выложил своё слово; <b>0</b> — за чужое.
+         Игра до четырёх.</p>
+         
+         <p>первый игрок — <code class="a">a</code><code class="b">b</code><code class="c">c</code><code class="d">d</code>,
+            второй — <code class="b">b</code><code class="a">a</code><code class="d">d</code><code class="c">c</code>.</p>
 
-      Цель — выложить своё слово в ряд.
+      <p>После своего слова оно стирается и сносит немного вокруг, после чужого — просто
+         стирается. Буква, достроившая слово, не стирается.</p>
 
-      Буквы общие. + 1 очко тому кто выложил своё слово. + 0 очков тому кто выложил чужое. Игра до четырёх. 
-
-      После сбора своего слова оно стирается и стирает немного вокруг, а после чужого — стирается. Заверающая буквы не стирается.
-      
       <h4>Направления чтения</h4>
       <p>Только половина хаоса: →, ↓, ↘ и ↗.</p>
 
+    
     </div>
   </details>
 </section>
